@@ -68,8 +68,6 @@ void netstat(string ip)
 
     cmd.Start();
 
-    /* execute "dir" */
-
     cmd.StandardInput.WriteLine($"netstat -ano | findstr {ip}");
     cmd.StandardInput.Flush();
     cmd.StandardInput.Close();

@@ -20,19 +20,12 @@ var socketsHandler = new SocketsHttpHandler
 
 var client = new HttpClient(socketsHandler);
 
-
-
 await Connect(5,false);
-
 await Connect(5,false);
-
 await Connect(5,true);
-
-
 
 Console.WriteLine("Press a key to exit...");
 Console.ReadKey();
-
 
 async Task Connect(int count, bool closeConnection)
 {
@@ -43,7 +36,8 @@ async Task Connect(int count, bool closeConnection)
         try
         {
 
-            await client.GetAsync("http://www.admin.samfoust.com");
+            var resp = await client.GetAsync("http://www.admin.samfoust.com");
+            resp.EnsureSuccessStatusCode();
             //delay just to make sure connections are not reused
             await Task.Delay(TimeSpan.FromMilliseconds(2));
         }

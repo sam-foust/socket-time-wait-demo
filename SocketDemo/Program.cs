@@ -3,22 +3,21 @@ using System.Diagnostics;
 using System.Net;
 
 
-var ips = await Dns.GetHostAddressesAsync("www.admin.samfoust.com");
-var ip = ips[0].MapToIPv4().ToString();
+IPAddress[] ips = await Dns.GetHostAddressesAsync("www.admin.samfoust.com");
+string ip = ips[0].MapToIPv4().ToString();
 
 Console.WriteLine("Default system netstat");
 netstat(ip);
 
-
 //force client to not reuse connections
-var socketsHandler = new SocketsHttpHandler
+SocketsHttpHandler socketsHandler = new()
 {
     PooledConnectionLifetime = TimeSpan.FromMilliseconds(1),
     PooledConnectionIdleTimeout = TimeSpan.FromMilliseconds(1),
     MaxConnectionsPerServer = 10
 };
 
-var client = new HttpClient(socketsHandler);
+HttpClient client = new(socketsHandler);
 
 await Connect(5,false);
 await Connect(5,false);
@@ -30,29 +29,23 @@ Console.ReadKey();
 async Task Connect(int count, bool closeConnection)
 {
     client.DefaultRequestHeaders.ConnectionClose = closeConnection;
+
     Console.WriteLine($"Connecting {count} times, ConnectionClose: {closeConnection}");
-    for (var i = 0; i < count; i++)
+
+    for (int i = 0; i < count; i++)
     {
-        try
-        {
-
-            var resp = await client.GetAsync("http://www.admin.samfoust.com");
-            resp.EnsureSuccessStatusCode();
-            //delay just to make sure connections are not reused
-            await Task.Delay(TimeSpan.FromMilliseconds(2));
-        }
-        catch (Exception e)
-        {
-
-            throw;
-        }
+        HttpResponseMessage resp = await client.GetAsync("http://www.admin.samfoust.com");
+        resp.EnsureSuccessStatusCode();
+        //delay just to make sure connections are not reused
+        await Task.Delay(TimeSpan.FromMilliseconds(2));
 
     }
     netstat(ip);
 }
+
 void netstat(string ip)
 {
-    Process cmd = new Process();
+    Process cmd = new();
 
     cmd.StartInfo.FileName = "cmd.exe";
     cmd.StartInfo.RedirectStandardInput = true;
@@ -65,8 +58,8 @@ void netstat(string ip)
     cmd.StandardInput.WriteLine($"netstat -ano | findstr {ip}");
     cmd.StandardInput.Flush();
     cmd.StandardInput.Close();
-    var output = cmd.StandardOutput.ReadToEnd();
-    var count = output.Split(' ').Count(c => c == "TIME_WAIT");
+    string output = cmd.StandardOutput.ReadToEnd();
+    int count = output.Split(' ').Count(c => c == "TIME_WAIT");
     Console.WriteLine($"System has {count} sockets in TIME_WAIT for ip: {ip} ");
     Console.WriteLine();
 }
